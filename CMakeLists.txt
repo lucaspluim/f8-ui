@@ -56,8 +56,14 @@ target_sources(XYControl PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
     Source/XYControlComponent.cpp
-    Source/NativeDialogs.mm
 )
+
+# Add platform-specific native dialog implementations
+if(APPLE)
+    target_sources(XYControl PRIVATE Source/NativeDialogs.mm)
+else()
+    target_sources(XYControl PRIVATE Source/NativeDialogs.cpp)
+endif()
 
 target_compile_definitions(XYControl PRIVATE
     JUCE_WEB_BROWSER=0
@@ -116,9 +122,15 @@ target_sources(XYControlPlugin PRIVATE
     Source/PluginEditor.h
     Source/XYControlComponent.cpp
     Source/XYControlComponent.h
-    Source/NativeDialogs.mm
     Source/NativeDialogs.h
 )
+
+# Add platform-specific native dialog implementations
+if(APPLE)
+    target_sources(XYControlPlugin PRIVATE Source/NativeDialogs.mm)
+else()
+    target_sources(XYControlPlugin PRIVATE Source/NativeDialogs.cpp)
+endif()
 
 target_compile_definitions(XYControlPlugin PUBLIC
     JUCE_WEB_BROWSER=0
