@@ -1,0 +1,34 @@
+# Build artifacts
+build/
+*.o
+*.a
+*.dylib
+*.so
+*.dll
+*.exe
+
+# IDE files
+.vscode/
+.idea/
+*.xcodeproj
+*.xcworkspace
+*.sln
+*.vcxproj
+*.user
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# JUCE
+JuceLibraryCode/
+Builds/
+
+# Backup files
+*.bak
+*.backup
+*.tar.gz
+
+# Logs
+*.log
