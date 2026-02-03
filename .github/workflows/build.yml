@@ -43,6 +43,10 @@ jobs:
       run: |
         echo "Windows dependencies already available"
 
+    - name: Setup MSBuild (Windows)
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v2
+
     - name: Configure CMake (Windows)
       if: runner.os == 'Windows'
       run: |
