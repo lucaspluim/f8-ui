@@ -4,7 +4,7 @@
 XYControlAudioProcessorEditor::XYControlAudioProcessorEditor(XYControlAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
-    setSize(700, 700);
+    setSize(368, 368);  // Match standalone app size
     addAndMakeVisible(xyControl);
 
     presetsFolder = NativeDialogs::getPresetsFolder();
@@ -22,41 +22,74 @@ XYControlAudioProcessorEditor::~XYControlAudioProcessorEditor()
 
 void XYControlAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xfff5f5f7));
-
-    auto controlBounds = xyControl.getBounds();
-    juce::Path shadowPath;
-    shadowPath.addRoundedRectangle(controlBounds.toFloat(), 26.0f);
-
     auto preset = xyControl.getCurrentPreset();
-    juce::Colour shadowColor;
+
+    // Fill background with color matching the preset
+    juce::Colour backgroundColor;
+    juce::Colour borderColor;
 
     if (preset == XYControlComponent::Preset::Blue)
-        shadowColor = juce::Colour(0x14000000);
+    {
+        backgroundColor = juce::Colours::white;
+        borderColor = juce::Colours::black;
+    }
     else if (preset == XYControlComponent::Preset::Red)
-        shadowColor = juce::Colour(0x30000000);
-    else
-        shadowColor = juce::Colour(0x40000000);
+    {
+        backgroundColor = juce::Colour(0xFFFF0000);  // Red
+        borderColor = juce::Colours::black;
+    }
+    else // Black
+    {
+        backgroundColor = juce::Colour(0xFF0A0A0A);  // Very dark gray instead of pure black
+        borderColor = juce::Colours::white;
+    }
+
+    g.fillAll(backgroundColor);
+
+    // Subtle drop shadow for depth (Apple-style)
+    auto controlBounds = xyControl.getBounds().toFloat();
+    float cornerRadius = 24.0f;
+
+    juce::Path shadowPath;
+    shadowPath.addRoundedRectangle(controlBounds, cornerRadius);
+
+    // Use appropriate shadow based on preset - all use dark shadows for uniformity
+    juce::Colour shadowColor;
+    if (preset == XYControlComponent::Preset::Blue)
+        shadowColor = juce::Colour(0x14000000);  // Subtle dark on white
+    else if (preset == XYControlComponent::Preset::Red)
+        shadowColor = juce::Colour(0x30000000);  // Darker on red
+    else // Black
+        shadowColor = juce::Colour(0x40000000);  // Dark shadow on very dark gray (barely visible but maintains uniformity)
 
     juce::DropShadow shadow(shadowColor, 18, juce::Point<int>(0, 4));
     shadow.drawForPath(g, shadowPath);
 
-    // Draw blue progress outline during hold
-    if (holdProgress > 0.0f)
+    // Draw blue progress ring during hold (stays glued to border)
+    // Only show after brief delay to avoid flashing on quick double-clicks
+    if (holdProgress > 0.07f)  // ~200ms delay before becoming visible
     {
-        g.setColour(juce::Colour(0xff007aff).withAlpha(0.3f + holdProgress * 0.7f));
-        float strokeWidth = 2.0f + holdProgress * 6.0f;
-        float expansion = holdProgress * 12.0f;
-        g.drawRoundedRectangle(controlBounds.toFloat().expanded(expansion),
-                              24.0f + expansion * 0.5f,
-                              strokeWidth);
+        // Adjust progress to start from 0 after the delay
+        float adjustedProgress = (holdProgress - 0.07f) / 0.93f;
+
+        // Blue ring color with opacity based on progress
+        g.setColour(juce::Colour(0xff007aff).withAlpha(0.3f + adjustedProgress * 0.7f));
+
+        // Stroke width grows with progress - ring gets thicker but stays attached
+        float strokeWidth = 2.0f + adjustedProgress * 10.0f;
+
+        // Draw ring that stays glued to the XY border (no expansion)
+        g.drawRoundedRectangle(controlBounds, cornerRadius, strokeWidth);
     }
 }
 
 void XYControlAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds();
-    xyControl.setBounds(bounds.withSizeKeepingCentre(500, 500));
+
+    // Add padding (26px on each side) for clickable area
+    auto xySize = bounds.getWidth() - 52;  // 26px padding on each side
+    xyControl.setBounds(bounds.withSizeKeepingCentre(xySize, xySize));
 }
 
 void XYControlAudioProcessorEditor::mouseDown(const juce::MouseEvent& event)

@@ -3,6 +3,20 @@ project(XYControl VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Set default build type to Release if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
+# Optimization flags for Release builds (no quality degradation)
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if(MSVC)
+        add_compile_options(/O2 /Ob2 /Ot /GL)
+    else()
+        add_compile_options(-O3 -ffast-math -funroll-loops)
+    endif()
+endif()
+
 # Fetch JUCE
 include(FetchContent)
 FetchContent_Declare(
@@ -93,7 +107,6 @@ juce_add_plugin(XYControlPlugin
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE
-    VST3_COPY_DIR "$ENV{HOME}/Library/Audio/Plug-Ins/VST3"
 )
 
 target_sources(XYControlPlugin PRIVATE
