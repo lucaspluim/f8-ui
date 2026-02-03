@@ -1,0 +1,78 @@
+name: Build VST3
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+        include:
+          - os: windows-latest
+            artifact_name: XY-Control-VST3-Windows
+            artifact_path: build/XYControlPlugin_artefacts/Release/VST3/
+          - os: macos-latest
+            artifact_name: XY-Control-VST3-macOS
+            artifact_path: build/XYControlPlugin_artefacts/Release/VST3/
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v1.14
+      with:
+        cmake-version: '3.15.x'
+
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "macOS dependencies already available"
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        echo "Windows dependencies already available"
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build VST3
+      run: |
+        cmake --build build --config Release --target XYControlPlugin_VST3 -j 4
+
+    - name: Upload VST3 artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_path }}
+        retention-days: 30
+
+    - name: Create archive (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Compress-Archive -Path "build/XYControlPlugin_artefacts/Release/VST3/XY Control.vst3" -DestinationPath "XY-Control-VST3-Windows.zip"
+
+    - name: Create archive (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        cd build/XYControlPlugin_artefacts/Release/VST3/
+        zip -r ../../../../XY-Control-VST3-macOS.zip "XY Control.vst3"
+
+    - name: Upload zip artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.artifact_name }}-zip
+        path: "*.zip"
+        retention-days: 30
